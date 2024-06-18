@@ -27,13 +27,7 @@ export const createDiscussion = async (req: any, res: Response) => {
 
 export const updateDiscussion = async (req: any, res: Response) => {
   const { id } = req.params;
-  const { text, image } = req.body;
-
-  // Extract hashtags from the text
-  const hashtags =
-    text
-      .match(/#\w+/g)
-      ?.map((hashtag: string) => hashtag.slice(1).toLowerCase()) || [];
+  const { text, image, comments, comment, likes } = req.body;
 
   try {
     const discussion = await Discussion.findById(id);
@@ -43,9 +37,34 @@ export const updateDiscussion = async (req: any, res: Response) => {
         return res.status(401).json({ message: "Not authorized" });
       }
 
-      discussion.text = text || discussion.text;
-      discussion.image = image || discussion.image;
-      discussion.hashtags = hashtags || discussion.hashtags;
+      // Update text and extract hashtags if provided
+      if (text) {
+        const extractedHashtags =
+          text
+            .match(/#\w+/g)
+            ?.map((hashtag: string) => hashtag.slice(1).toLowerCase()) || [];
+        discussion.text = text;
+        discussion.hashtags = extractedHashtags;
+      }
+
+      // Update image if provided
+      if (image) {
+        discussion.image = image;
+      }
+
+      // Update comments if provided
+      if (comments && Array.isArray(comments)) {
+        discussion.comments = comments;
+      }
+
+      if (comment) {
+        discussion.comments = [...(discussion.comments ?? []), comment];
+      }
+
+      // Update likes if provided
+      if (likes && Array.isArray(likes)) {
+        discussion.likes = likes;
+      }
 
       const updatedDiscussion = await discussion.save();
       res.status(200).json(updatedDiscussion);
@@ -122,6 +141,29 @@ export const incrementViewCount = async (
       await discussion.save();
       req.discussion = discussion;
       next();
+    } else {
+      res.status(404).json({ message: "Discussion not found" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const likeDiscussion = async (req: any, res: Response) => {
+  const { discussionId } = req.body;
+
+  try {
+    const discussion = await Discussion.findById(discussionId);
+
+    if (discussion) {
+      const userId = req.user.id;
+      discussion.likes =
+        userId.toString() !== discussion.user.toString()
+          ? [...(discussion.likes || []), userId]
+          : discussion.likes;
+
+      await discussion.save();
+      res.status(200).json(discussion);
     } else {
       res.status(404).json({ message: "Discussion not found" });
     }
