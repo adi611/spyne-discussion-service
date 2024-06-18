@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import Discussion from "../models/discussionModel";
+import { TDiscussion } from "../types/types";
 
 export const createDiscussion = async (req: any, res: Response) => {
   const { text, image } = req.body;
@@ -12,11 +13,11 @@ export const createDiscussion = async (req: any, res: Response) => {
         ?.map((hashtag: string) => hashtag.slice(1).toLowerCase()) || [];
 
     const discussion = new Discussion({
-      user: req.user.id,
+      userId: req.user.id,
       text,
       image,
       hashtags,
-    });
+    } as TDiscussion);
 
     await discussion.save();
     res.status(201).json(discussion);
@@ -33,7 +34,7 @@ export const updateDiscussion = async (req: any, res: Response) => {
     const discussion = await Discussion.findById(id);
 
     if (discussion) {
-      if (discussion.user.toString() !== req.user.id.toString()) {
+      if (discussion.userId.toString() !== req.user.id.toString()) {
         return res.status(401).json({ message: "Not authorized" });
       }
 
@@ -72,6 +73,7 @@ export const updateDiscussion = async (req: any, res: Response) => {
       res.status(404).json({ message: "Discussion not found" });
     }
   } catch (error) {
+    console.log("error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -83,7 +85,7 @@ export const deleteDiscussion = async (req: any, res: Response) => {
     const discussion = await Discussion.findById(id);
 
     if (discussion) {
-      if (discussion.user.toString() !== req.user.id.toString()) {
+      if (discussion.userId.toString() !== req.user.id.toString()) {
         return res.status(401).json({ message: "Not authorized" });
       }
 
@@ -158,7 +160,7 @@ export const likeDiscussion = async (req: any, res: Response) => {
     if (discussion) {
       const userId = req.user.id;
       discussion.likes =
-        userId.toString() !== discussion.user.toString()
+        userId.toString() !== discussion.userId.toString()
           ? [...(discussion.likes || []), userId]
           : discussion.likes;
 

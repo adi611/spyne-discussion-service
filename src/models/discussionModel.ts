@@ -2,7 +2,7 @@ import mongoose, { Schema } from 'mongoose';
 import { TDiscussion } from '../types/types';
 
 const discussionSchema = new Schema<TDiscussion>({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   text: { type: String, required: true },
   image: { type: String },
   hashtags: [{ type: String }],

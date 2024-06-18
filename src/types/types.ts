@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 export type TDiscussion = {
-  user: mongoose.Types.ObjectId;
+  userId: mongoose.Types.ObjectId;
   text: string;
   image?: string;
   hashtags?: string[];
